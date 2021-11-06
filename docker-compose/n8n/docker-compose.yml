@@ -1,0 +1,51 @@
+version: '2.4'
+
+services:
+
+  postgres:
+    image: postgres:11
+    restart: always
+    environment:
+      - POSTGRES_USER=REPLACETHIS_DB_LOGIN_ROOT_USERNAME
+      - POSTGRES_PASSWORD=REPLACETHIS_DB_LOGIN_ROOT_PASSWORD
+      - POSTGRES_DB=n8n
+
+      - POSTGRES_NON_ROOT_USER=REPLACETHIS_DB_LOGIN_ROOT_USERNAME
+      - POSTGRES_NON_ROOT_PASSWORD=REPLACETHIS_DB_LOGIN_ROOT_PASSWORD
+      
+      - N8N_BASIC_AUTH_USER=REPLACETHIS_USER_LOGIN_USERNAME
+      - N8N_BASIC_AUTH_PASSWORD=REPLACETHIS_USER_LOGIN_PASSWORD
+
+    volumes:
+      - ./init-data.sh:/docker-entrypoint-initdb.d/init-data.sh
+
+  n8n:
+    image: n8nio/n8n
+    restart: always
+    environment:
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=n8n
+      - DB_POSTGRESDB_USER=REPLACETHIS_DB_LOGIN_ROOT_USERNAME
+      - DB_POSTGRESDB_PASSWORD=REPLACETHIS_DB_LOGIN_ROOT_PASSWORD
+      - N8N_BASIC_AUTH_ACTIVE=true
+      
+      - POSTGRES_USER=REPLACETHIS_DB_LOGIN_ROOT_USERNAME
+      - POSTGRES_PASSWORD=REPLACETHIS_DB_LOGIN_ROOT_PASSWORD
+      - POSTGRES_DB=n8n
+
+      - POSTGRES_NON_ROOT_USER=REPLACETHIS_DB_LOGIN_NONROOT_USERNAME
+      - POSTGRES_NON_ROOT_PASSWORD=REPLACETHIS_DB_LOGIN_NONROOT_PASSWORD
+
+      - N8N_BASIC_AUTH_USER=REPLACETHIS_USER_LOGIN_USERNAME
+      - N8N_BASIC_AUTH_PASSWORD=REPLACETHIS_USER_LOGIN_PASSWORD
+    ports:
+      - 5678:5678
+    links:
+      - postgres
+    volumes:
+      - ~/.n8n:/home/node/.n8n
+    # Wait 5 seconds to start n8n to make sure that PostgreSQL is ready
+    # when n8n tries to connect to it
+    command: /bin/sh -c "sleep 5; n8n start"
